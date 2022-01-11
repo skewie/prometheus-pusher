@@ -102,3 +102,12 @@ We want the prometheus query express can precise positioning the container from 
 ```
 ./prometheus_pusher -config.file=prometheus.yml -config.customLabels=label1,label2 -config.customLabelValues=value1,value2
 ```
+
+
+### Running as Windows Service
+
+Run this command to create a windows service:
+
+```
+sc.exe create PrometheusPusher binPath= "<path-to-exe>.exe -config.file <path-to-config-file>\prometheus_pusher.yml -port 8082 -pgUrl http://localhost:9091"
+```

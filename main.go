@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/kardianos/service"
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/retrieval"
 	"github.com/prometheus/prometheus/storage"
@@ -44,18 +45,25 @@ func init() {
 	)
 }
 
-func main() {
+var logger service.Logger
 
+type program struct{}
+
+func (p *program) Start(s service.Service) error {
+	// Start should not block. Do the actual work async.
+	go p.run()
+	return nil
+}
+func (p *program) run() {
 	flag.Parse()
-
 	var (
 		sampleAppender = storage.Fanout{}
 		targetManager  = retrieval.NewTargetManager(sampleAppender)
 		jobTargets     = scrape.NewJobTargets(targetManager)
 	)
 
-	fmt.Println("Loading prometheus config file: " + cfg.configFile)
-	fmt.Println("Custom labels: " + cfg.customLabels + "\t Custom label values: " + cfg.customLabelValues)
+	logger.Info("Loading prometheus config file: " + cfg.configFile)
+	logger.Info("Custom labels: " + cfg.customLabels + "\t Custom label values: " + cfg.customLabelValues)
 
 	if cfg.customLabels == "" {
 		labels = []string{}
@@ -73,7 +81,7 @@ func main() {
 
 	conf, err := config.LoadFile(cfg.configFile)
 	if err != nil {
-		fmt.Println(err.Error())
+		logger.Error(err.Error())
 		return
 	}
 
@@ -99,5 +107,32 @@ func main() {
 		c.JSON(200, jobTargets.Targets())
 	})
 	r.Run(fmt.Sprintf(":%v", cfg.port))
+}
 
+func (p *program) Stop(s service.Service) error {
+	// Stop should not block. Return with a few seconds.
+	return nil
+}
+
+func main() {
+	flag.Parse()
+	svcConfig := &service.Config{
+		Name:        "GoServiceExampleSimple",
+		DisplayName: "Go Service Example",
+		Description: "This is an example Go service.",
+	}
+
+	prg := &program{}
+	s, err := service.New(prg, svcConfig)
+	if err != nil {
+		logger.Error(err)
+	}
+	logger, err = s.Logger(nil)
+	if err != nil {
+		logger.Error(err)
+	}
+	err = s.Run()
+	if err != nil {
+		logger.Error(err)
+	}
 }
