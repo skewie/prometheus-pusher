@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strings"
+
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/retrieval"
 	"github.com/prometheus/prometheus/storage"
-	"github.com/yunlzheng/prometheus-pusher/scrape"
-	"strings"
+	"github.com/skewie/prometheus-pusher/scrape"
 )
 
 var cfg = struct {
