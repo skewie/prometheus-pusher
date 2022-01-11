@@ -144,9 +144,7 @@ func (endpoint *jobEndpoint) scrape(jobName string, labels []string, values []st
 
 		metric := fmt.Sprintf("%s %s\n", sample.Metric, sample.Value)
 
-		if strings.Contains(metric, "node_") || strings.Contains(metric, "container_") || strings.Contains(metric, "rancher_") {
-			buffer.WriteString(metric)
-		}
+		buffer.WriteString(metric)
 	}
 
 	url := fmt.Sprintf("%s/metrics/job/%s/instance/%s", pushGateway, jobName, endpoint.instance())
