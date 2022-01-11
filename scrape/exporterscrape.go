@@ -1,26 +1,27 @@
 package scrape
 
 import (
-	"time"
-	"github.com/prometheus/prometheus/retrieval"
-	"github.com/prometheus/prometheus/config"
-	"github.com/prometheus/common/model"
-	"sort"
-	"fmt"
-	"net/http"
-	"github.com/prometheus/common/version"
-	"github.com/prometheus/common/expfmt"
-	"io"
 	"bytes"
-	"strings"
-	"os"
+	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/prometheus/common/expfmt"
+	"github.com/prometheus/common/model"
+	"github.com/prometheus/common/version"
+	"github.com/prometheus/prometheus/config"
+	"github.com/prometheus/prometheus/retrieval"
 )
 
 var pushGateway string
 
-func init() {
-	pushGateway = getOr("PUSH_GATEWAY", "http://pushgateway.example.org:9091")
+func SetPushGateway(pushGatewayUrl string) {
+	pushGateway = pushGatewayUrl
 }
 
 type JobTargets struct {
@@ -49,7 +50,7 @@ func (jt *JobTargets) Targets() []*jobTarget {
 	targets := []*jobTarget{}
 	for job, pool := range tps {
 		targets = append(targets, &jobTarget{
-			Name: job,
+			Name:      job,
 			Endpoints: covertToEndpoints(pool),
 		})
 	}
@@ -61,7 +62,7 @@ func covertToEndpoints(targets []*retrieval.Target) []*jobEndpoint {
 	for _, endpoint := range targets {
 		endpoints = append(endpoints, &jobEndpoint{
 			Endpoint: endpoint.URL().String(),
-			Health: string(endpoint.Health()),
+			Health:   string(endpoint.Health()),
 		})
 	}
 	return endpoints
@@ -105,7 +106,7 @@ func (endpoint *jobEndpoint) scrape(jobName string, labels []string, values []st
 
 	defer resp.Body.Close()
 
-	if (resp.StatusCode != http.StatusOK) {
+	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("server returned HTTP status %s", resp.Status)
 
 	}
@@ -189,9 +190,9 @@ type ExporterScrape struct {
 
 func NewExporterScrape(jt *JobTargets, labels []string, values []string) *ExporterScrape {
 	return &ExporterScrape{
-		jt: jt,
+		jt:     jt,
 		ticker: time.NewTicker(time.Second * 15),
-		quit: make(chan struct{}),
+		quit:   make(chan struct{}),
 		labels: labels,
 		values: values,
 	}
@@ -228,6 +229,3 @@ func getOr(env string, value string) string {
 	}
 	return envValue
 }
-
-
-

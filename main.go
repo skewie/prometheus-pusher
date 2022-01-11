@@ -17,6 +17,8 @@ var cfg = struct {
 	configFile        string
 	customLabels      string
 	customLabelValues string
+	port              uint
+	pushgatewayUrl    string
 }{}
 
 var (
@@ -33,6 +35,12 @@ func init() {
 	)
 	flag.StringVar(
 		&cfg.customLabelValues, "config.customLabelValues", "", "custom mertics label values",
+	)
+	flag.UintVar(
+		&cfg.port, "port", 8082, "The port that the application will listen on.",
+	)
+	flag.StringVar(
+		&cfg.pushgatewayUrl, "pgUrl", "localhost:9091", "The PushGateway URL to push metrics to",
 	)
 }
 
@@ -56,6 +64,8 @@ func main() {
 		labels = strings.Split(cfg.customLabels, ",")
 		values = strings.Split(cfg.customLabelValues, ",")
 	}
+
+	scrape.SetPushGateway(cfg.pushgatewayUrl)
 
 	var (
 		scrapeManager = scrape.NewExporterScrape(jobTargets, labels, values)
@@ -88,6 +98,6 @@ func main() {
 	r.GET("/targets", func(c *gin.Context) {
 		c.JSON(200, jobTargets.Targets())
 	})
-	r.Run()
+	r.Run(fmt.Sprintf(":%v", cfg.port))
 
 }
